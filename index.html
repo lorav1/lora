@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LoRA Beta Version</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #0f172a;
+            color: #64ffda;
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+        }
+
+        .terminal {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #1e293b;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(100, 255, 218, 0.1);
+            min-height: 80vh;
+        }
+
+        .ascii-art {
+            font-family: monospace;
+            white-space: pre;
+            font-size: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #3b82f6;
+            text-shadow: 0 0 5px #3b82f6;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            animation: glitch 1s infinite;
+        }
+
+        @keyframes glitch {
+            0% { text-shadow: 2px 0 0 #3b82f6, -2px 0 0 #64ffda; }
+            25% { text-shadow: -2px 0 0 #3b82f6, 2px 0 0 #64ffda; }
+            50% { text-shadow: 2px 0 0 #3b82f6, -2px 0 0 #64ffda; }
+            75% { text-shadow: -2px 0 0 #3b82f6, 2px 0 0 #64ffda; }
+            100% { text-shadow: 2px 0 0 #3b82f6, -2px 0 0 #64ffda; }
+        }
+
+        .content {
+            margin-bottom: 30px;
+        }
+
+        .command-line {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .prompt {
+            color: #7c3aed;
+            margin-right: 10px;
+        }
+
+        .command-input {
+            background: none;
+            border: none;
+            color: #64ffda;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            flex-grow: 1;
+            outline: none;
+        }
+
+        .output {
+            margin-left: 20px;
+            margin-bottom: 20px;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+            color: #94a3b8;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .profile {
+            border-top: 1px solid #64ffda;
+            padding-top: 20px;
+            margin-top: 40px;
+            color: #f8fafc;
+        }
+
+        a {
+            color: #3b82f6;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        a:hover {
+            color: #64ffda;
+            text-shadow: 0 0 10px #64ffda;
+        }
+
+        .typing {
+            border-right: 2px solid #64ffda;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            50% { border-color: transparent; }
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal">
+        <div class="ascii-art">
+██╗      ██████╗ ██████╗  █████╗     ██████╗ ███████╗████████╗ █████╗ 
+██║     ██╔═══██╗██╔══██╗██╔══██╗    ██╔══██╗██╔════╝╚══██╔══╝██╔══██╗
+██║     ██║   ██║██████╔╝███████║    ██████╔╝█████╗     ██║   ███████║
+██║     ██║   ██║██╔══██╗██╔══██║    ██╔══██╗██╔══╝     ██║   ██╔══██║
+███████╗╚██████╔╝██║  ██║██║  ██║    ██████╔╝███████╗   ██║   ██║  ██║
+╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝    ╚═════╝ ╚══════╝   ╚═╝   ╚═╝  ╚═╝
+        </div>
+        <div class="header">
+            <h1>LoRA Beta Version</h1>
+        </div>
+        <div class="content">
+            <div class="command-line">
+                <span class="prompt">$</span>
+                <span id="welcomeText" class="typing"></span>
+            </div>
+            <div class="output" id="commandOutput"></div>
+        </div>
+        <div id="commandHistory"></div>
+        <div class="profile">
+            <p>Founder: <a href="https://x.com/AndyAyrey" target="_blank">Andy Ayrey</a></p>
+        </div>
+    </div>
+
+    <script>
+        const welcomeText = "Welcome to LoRA Beta Version Terminal... Type 'help' for available commands";
+        let index = 0;
+        const welcomeElement = document.getElementById('welcomeText');
+
+        function typeText() {
+            if (index < welcomeText.length) {
+                welcomeElement.textContent += welcomeText.charAt(index);
+                index++;
+                setTimeout(typeText, 50);
+            } else {
+                welcomeElement.classList.remove('typing');
+                addCommandListener();
+            }
+        }
+
+        function addCommandListener() {
+            const history = document.getElementById('commandHistory');
+            const newCommandLine = document.createElement('div');
+            newCommandLine.className = 'command-line';
+            newCommandLine.innerHTML = `
+                <span class="prompt">$</span>
+                <input type="text" class="command-input" autofocus>
+            `;
+            history.appendChild(newCommandLine);
+            
+            const input = newCommandLine.querySelector('.command-input');
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    processCommand(input.value, history);
+                    input.disabled = true;
+                }
+            });
+            input.focus();
+        }
+
+        function processCommand(command, history) {
+            const output = document.createElement('div');
+            output.className = 'output';
+            
+            switch(command.toLowerCase()) {
+                case 'help':
+                    output.innerHTML = `
+                        Available commands:
+                        - help: Show this help message
+                        - about: About LoRA Beta Version
+                        - clear: Clear terminal
+                        - contact: Contact information
+                    `;
+                    break;
+                case 'about':
+                    output.innerHTML = `
+                        LoRA Beta Version
+                        A cutting-edge terminal interface for the next generation.
+                        Version: 1.0.0 Beta
+                    `;
+                    break;
+                case 'clear':
+                    history.innerHTML = '';
+                    addCommandListener();
+                    return;
+                case 'contact':
+                    output.innerHTML = `
+                        Founder: Andy Ayrey
+                        Twitter: <a href="https://x.com/AndyAyrey" target="_blank">@AndyAyrey</a>
+                    `;
+                    break;
+                default:
+                    output.innerHTML = `Command not found: ${command}. Type 'help' for available commands.`;
+            }
+            
+            history.appendChild(output);
+            addCommandListener();
+        }
+
+        typeText();
+    </script>
+</body>
+</html>
